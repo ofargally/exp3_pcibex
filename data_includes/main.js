@@ -1,14 +1,13 @@
 //Pre-final Revision Version
+PennController.DebugOff();
 PennController.ResetPrefix(null);
-//DebugOff()
-PennController.Sequence("intro", "counter", "demographic", "instructions", "practiceBeginningScreen", "SeperatorScreen_1", "exercise", "SeperatorScreen_2", "experiment", "send_results", "participant_observations", "end_of_exp");
-//const voucher = b64_md5((Date.now() + Math.random()).toString()); // Voucher code generator
+PennController.Sequence("intro", "counter", "demographic", "instructions", "practiceBeginningScreen", "SeperatorScreen_1", "exercise", "SeperatorScreen_2", "experiment", "participant_observations","feed_back_request", "send_results", "end_of_exp");
 //Set Participant Counter
 SetCounter("counter","inc", 1);
 //Set up Intro
 PennController("intro",
     newHtml("intro", "intro.html")
-        .settings.log()
+        .settings.log() //collect Consent
         .print()
     ,
 
@@ -23,7 +22,7 @@ PennController("intro",
 //Set up questions about demographic.
 PennController("demographic",
     newHtml("demographics", "demographic.html")
-        .settings.log()
+        .settings.log() //Collects basic demo Data
         .print()
     ,
     newButton("continue", "Continue")
@@ -49,7 +48,7 @@ PennController("instructions",
 //Set up Beginning of Practice
 PennController("practiceBeginningScreen", 
     newHtml("practiceBeginningScreen", "begin_of_practice.html")
-        .settings.log()
+        .settings.log() 
         .print()
     ,
     newKey("key_2", "")
@@ -60,7 +59,7 @@ PennController("practiceBeginningScreen",
 );
 //Set up Seperator Screen
 newTrial("SeperatorScreen_1",
-    newText("proceed_text", "Press the <b>Space Bar</b> on the Next Screen to Reveal the Next Keyword")
+    newText("proceed_text", "On the next screen, pressing <b>spacebar</b> will reveal the words in the sentence one word at a time. Press any key now to start the experiment.")
         .print()
         .center()
     ,
@@ -77,26 +76,25 @@ Template("exercise.csv", row =>
             .wait()
         ,
         newController("DashedSentence", {s : row.Sentence})
-            .settings.css("font-size","1.1em")
             .print()
-            .log() //Time participant takes to go through the Dashed Sentence
+            .center()
+            .log()
             .wait()
             .remove()
         ,
         //NOTICE: We need to somehow make the question appear in the Center Everyime and Fix CSS
         newText("Question", row.Question)
-            .css("font-size", "20px")
+            .css("font-size", "30px")
+            .print()
+            .center()
         ,
         newButton("Yes_Button_1", "Yes")
-            .css("font-size", "16px")
         ,
         newButton("No_Button_1", "No")
-            .css("font-size", "16px")
         ,
         newCanvas("canvas", 500, 100)
-            .add( 0, 0, getText("Question").print().css("font-size", "20px"))
-            .add( 50, 50, getButton("Yes_Button_1").print().css("font-size", "16px"))
-            .add( 350, 50, getButton("No_Button_1").print().css("font-size", "16px"))
+            .add( 175, 50, getButton("Yes_Button_1").print().css("font-size", "16px"))
+            .add( 290, 50, getButton("No_Button_1").print().css("font-size", "16px"))
             .print()
             .center()
         ,
@@ -109,10 +107,16 @@ Template("exercise.csv", row =>
             .remove()
         ,
         getCanvas("canvas")
+            .remove()
+        ,
+        getText("Question")
             .remove())
     //Loggin Important Information
     .log( "Type", row.Type)
     .log( "List" , row.Group)
+    .log( "Question", row.Question)
+    .log( "Correct_Option", row.Answer)
+    
 );
 
 newTrial("SeperatorScreen_2",
@@ -141,51 +145,56 @@ Template("experiment_questions.csv", row =>
             .wait()
         ,
         newController("DashedSentence", {s : row.Sentence})
-            .settings.css("font-size","1.1em")
             .print()
+            .center()
             .log()
             .wait()
             .remove()
         ,
         //NOTICE: We need to somehow make the question appear in the Center Everyime and fix CSS
         newText("Question_2", row.Question)
-            .css("font-size", "20px")
+            .css("font-size", "30px")
+            .print()
+            .center()
         ,
         newButton("Yes_Button_2", "Yes")
-            .css("font-size", "16px")
         ,
         newButton("No_Button_2", "No")
-            .css("font-size", "16px")
+        ,
+        newVar("RT_response").global().set(v_rt => Date.now())
         ,
         newCanvas("canvas_2", 500, 100)
-            .add( 0, 0, getText("Question_2").print().css("font-size", "20px"))
-            .add( 50, 50, getButton("Yes_Button_2").print().css("font-size", "16px"))
-            .add( 350, 50, getButton("No_Button_2").print().css("font-size", "16px"))
+            .add( 175, 50, getButton("Yes_Button_2").print().css("font-size", "16px"))
+            .add( 290, 50, getButton("No_Button_2").print().css("font-size", "16px"))
             .print()
             .center()
         ,
         newSelector("buttons_2")
             .add( getButton("Yes_Button_2") , getButton("No_Button_2") )
             .keys("Z","M")
-            .wait()
             .log()
+            .wait()
             .once()
             .remove()
         ,
+        getVar("RT_response").set( v_rt => Date.now() - v_rt )
+        ,
         getCanvas("canvas_2")
             .remove())
+    
     //Loggin Important Information
     .log( "Type", row.Type)
     .log( "List" , row.Group)
+    .log( "Question", row.Question)
+    .log( "Correct_Option", row.Answer)
+    .log( "RT_response", getVar("RT_response"))
 );
 
 
-//Sending Results
-PennController.SendResults("send_results").setOption("countsForProgressBar",false);
+
 
 //Collecting Participant Observations prior to end the Experiment
 PennController("participant_observations",
-    //NOTICE: need to make sure it's logging the participant feedback
     newHtml("participant_observations", "participant_observations.html")
         .settings.log()
         .print()
@@ -197,10 +206,29 @@ PennController("participant_observations",
     newSelector("text_Selector")
             .add(getText("continue_text"))
             .wait()
-            .log() //NOTICE: Need confirmation for this log from Prasad
+            .log()
             .once()
             .remove()
 );
+//Collection other feedback
+PennController("feed_back_request",
+    newHtml("feed_back_request", "feed_back_request.html")
+        .settings.log()
+        .print()
+    ,
+    newText("continue_text", "→ Click here to continue")
+        .css("color", "blue")
+        .print()
+    ,
+    newSelector("text_Selector")
+            .add(getText("continue_text"))
+            .wait()
+            .log()
+            .once()
+            .remove()
+);
+//Sending Results
+PennController.SendResults("send_results").setOption("countsForProgressBar",false);
 //Ending the Experiment and Collecting Feedback
 newTrial("end_of_exp",
     //Notice: Make sure the feedback is logged
@@ -210,11 +238,4 @@ newTrial("end_of_exp",
     ,
     newButton().wait(getHtml("end_of_exp").test.complete()
             .failure(getHtml("end_of_exp").warn()))
-    /*    
-    ,
-    newButton.wait(
-        getHtml("end_of_exp").test.complete()
-            .failure(getHtml("end_of_exp").warn()))
-            */
 ).setOption("countsForProgressBar",false);
-
