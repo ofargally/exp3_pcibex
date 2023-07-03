@@ -151,7 +151,6 @@ Template("experiment_questions.csv", row =>
             .wait()
             .remove()
         ,
-        //NOTICE: We need to somehow make the question appear in the Center Everyime and fix CSS
         newText("Question_2", row.Question)
             .css("font-size", "30px")
             .print()
@@ -190,9 +189,6 @@ Template("experiment_questions.csv", row =>
     .log( "RT_response", getVar("RT_response"))
 );
 
-
-
-
 //Collecting Participant Observations prior to end the Experiment
 PennController("participant_observations",
     newHtml("participant_observations", "participant_observations.html")
@@ -229,9 +225,8 @@ PennController("feed_back_request",
 );
 //Sending Results
 PennController.SendResults("send_results").setOption("countsForProgressBar",false);
-//Ending the Experiment and Collecting Feedback
+//Ending the Experiment
 newTrial("end_of_exp",
-    //Notice: Make sure the feedback is logged
     newHtml("end_of_exp", "end_of_exp.html")
         .settings.log()
         .print()
