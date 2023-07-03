@@ -1,4 +1,3 @@
-//Pre-final Revision Version
 PennController.DebugOff();
 PennController.ResetPrefix(null);
 PennController.Sequence("intro", "counter", "demographic", "instructions", "practiceBeginningScreen", "SeperatorScreen_1", "exercise", "SeperatorScreen_2", "experiment", "participant_observations","feed_back_request", "send_results", "end_of_exp");
@@ -10,7 +9,6 @@ PennController("intro",
         .settings.log() //collect Consent
         .print()
     ,
-
     newButton("continue", "Continue")
         .settings.css("font-size", "larger")
         .print()
@@ -19,7 +17,7 @@ PennController("intro",
                 .failure(getHtml("intro").warn())
         )
 );
-//Set up questions about demographic.
+//Set up questions about demographics and collect data for them
 PennController("demographic",
     newHtml("demographics", "demographic.html")
         .settings.log() //Collects basic demo Data
@@ -33,7 +31,7 @@ PennController("demographic",
                 .failure( getHtml("demographics").warn() )
         )
 );
-//Set up instructions
+//View experiment instructions
 PennController("instructions",
     newHtml("instructions", "instructions.html")
         .settings.log()
@@ -45,7 +43,7 @@ PennController("instructions",
                 .failure( getHtml("instructions").warn() )
         )
 );
-//Set up Beginning of Practice
+//Set up the beginning of the practice section which serves to remind the participants of the controls
 PennController("practiceBeginningScreen", 
     newHtml("practiceBeginningScreen", "begin_of_practice.html")
         .settings.log() 
@@ -69,6 +67,7 @@ newTrial("SeperatorScreen_1",
     getText("proceed_text")
         .remove()
 );
+//Generate the exercises to allow the participant to practice before the experiment
 Template("exercise.csv", row =>
   newTrial("exercise",
         newTimer("timer_1", 500)
@@ -82,7 +81,6 @@ Template("exercise.csv", row =>
             .wait()
             .remove()
         ,
-        //NOTICE: We need to somehow make the question appear in the Center Everyime and Fix CSS
         newText("Question", row.Question)
             .css("font-size", "30px")
             .print()
@@ -111,7 +109,6 @@ Template("exercise.csv", row =>
         ,
         getText("Question")
             .remove())
-    //Loggin Important Information
     .log( "Type", row.Type)
     .log( "List" , row.Group)
     .log( "Question", row.Question)
@@ -137,7 +134,7 @@ newTrial("SeperatorScreen_2",
         .remove()
 );
 
-//Running the Experiment - basically copy the code from practice once I get it to work 
+//Running the actual Experiment now using the main CSV file
 Template("experiment_questions.csv", row =>
   newTrial("experiment",
         newTimer("timer_2", 500)
@@ -180,8 +177,7 @@ Template("experiment_questions.csv", row =>
         ,
         getCanvas("canvas_2")
             .remove())
-    
-    //Loggin Important Information
+    //Logging Important Information
     .log( "Type", row.Type)
     .log( "List" , row.Group)
     .log( "Question", row.Question)
@@ -189,7 +185,7 @@ Template("experiment_questions.csv", row =>
     .log( "RT_response", getVar("RT_response"))
 );
 
-//Collecting Participant Observations prior to end the Experiment
+//Collecting participant observations prior to ending the experiment
 PennController("participant_observations",
     newHtml("participant_observations", "participant_observations.html")
         .settings.log()
@@ -206,7 +202,7 @@ PennController("participant_observations",
             .once()
             .remove()
 );
-//Collection other feedback
+//Collecting other general feedback participants may have
 PennController("feed_back_request",
     newHtml("feed_back_request", "feed_back_request.html")
         .settings.log()
